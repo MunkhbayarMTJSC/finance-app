@@ -19,6 +19,23 @@ var uiController = (function () {
         },
         getDOMstrings: function () {
             return DOMstring;
+        },
+        addListItem: function (item,type) {
+            // Орлого зарлагийн элементийг агуулсан HTML-г бэлтгэнэ
+            var html, list;
+            if (type === "inc") {
+                list = '.income__list';
+                html = '<div class="item clearfix" id="income-%id%"><div class="item__description">%desc%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+            } else {
+                list = '.expenses__list';
+                html = '<div class="item clearfix" id="expense-%id%"><div class="item__description">%desc%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>'
+            }
+            // Тэр HTML дотроо орлог зарлагуудыг replace ашиглаж өөрчилж өгнө
+            html = html.replace('%id%', item.id);
+            html = html.replace('%desc%', item.desc);
+            html = html.replace('%value%', item.value);
+            // Бэлтгээн HTML ээ DOM руу хийж өгнө.
+            document.querySelector(list).insertAdjacentHTML('beforeend',html);
         }
     }
 })();
@@ -45,6 +62,23 @@ var financeController = (function () {
             exp:0
         }
     }
+    return {
+        addItem: function (type, desc, value) {
+            var item, id;
+            if (data.allItems[type].length === 0) {
+                id = 1;
+            } else {
+                id = data.allItems[type][data.allItems[type].length - 1].id+1;
+            }
+            if (type === 'inc') {
+                item = new Income(id, desc, value);
+            } else {
+                item = new Expense(id, desc, value);
+            }
+            data.allItems[type].push(item);
+            return item;
+        }
+    }
 })();
 
 
@@ -52,11 +86,11 @@ var appController = (function (uiController, financeController) {
 
     var ctrlAddItem = function () {
         // Оруулах өгөгдөлийг бэлдэцээс олж авна
-        console.log(uiController.getInput().type+ " "+ uiController.getInput().desc+" "+uiController.getInput().value);
+        var input = uiController.getInput();
         // Олж авсан өгөгдөлүүдээ санхүүгийн контроллерт дамжуулж тэнд хадгална
-
+        var item = financeController.addItem(input.type, input.desc, input.value);
         // Олж авсан өгөгдөлүүдээ вэб дээрээ гаргана
-
+        uiController.addListItem(item, input.type);
         // Төсвийг тооцоолно
 
         // Эцсийн үлдэгдэл тооцоог дэлгэцэнд гаргана
