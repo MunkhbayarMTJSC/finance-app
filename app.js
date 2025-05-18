@@ -11,7 +11,8 @@ var uiController = (function () {
         totalInc: '.budget__income--value',
         totalExp: '.budget__expenses--value',
         budgetVal: '.budget__value',
-        precentVal: '.budget__expenses--percentage'
+        precentVal: '.budget__expenses--percentage',
+        containerDiv: '.container'
     }
     return {
         getDOMString: function () {
@@ -24,14 +25,18 @@ var uiController = (function () {
                 value: parseInt(document.querySelector(DOMString.inputValue).value)
             }
         },
+        deleteListItem: function (id) {
+            var el = document.getElementById(id);
+            el.parentNode.removeChild(el);
+        },
         addListItem: function (item,type) {
             var html, list;
             if (type === 'inc') {
                 list = DOMString.incomeList;
-                html = '<div class="item clearfix" id="income-%id%"><div class="item__description">%desc%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+                html = '<div class="item clearfix" id="inc-%id%"><div class="item__description">%desc%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
             } else {
                 list = DOMString.expenseList;
-                html = '<div class="item clearfix" id="expense-%id%"><div class="item__description">%desc%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>'
+                html = '<div class="item clearfix" id="exp-%id%"><div class="item__description">%desc%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>'
             }
             html = html.replace('%id%', item.id);
             html = html.replace('%desc%', item.desc);
@@ -121,6 +126,15 @@ var financeController = (function () {
                 totalInc: data.totals.inc,
                 totalExp: data.totals.exp
             }
+        },
+        deleteItem: function (type, id) {
+            var ids = data.allItems[type].map(function (el) {
+                return el.id;
+            });
+            var index = ids.indexOf(id);
+            if (index !== -1) {
+                data.allItems[type].splice(index, 1);
+            }
         }
     }
 })();
@@ -134,14 +148,14 @@ var appController = (function (uiCtrl, finCtrl) {
             // Олж авсан өгөгдөлүүдээ financeController хэсэгт хадгална
             var item = finCtrl.addItem(input.type, input.desc, input.value);
             // Олж авсан өгөгдөлүүдээ вэб дээр нь тохирох хэсэгт хадгална
-            uiController.addListItem(item, input.type);
-            uiController.clearField();
+            uiCtrl.addListItem(item, input.type);
+            uiCtrl.clearField();
             // Төсвийг тооцоолно
             finCtrl.calculateFinance();
             // Эцэсийн үлдэгдэл 
             var finance = finCtrl.getFinance();
             // Дэлгэцэнд гаргана
-            uiController.showFinance(finance);
+            uiCtrl.showFinance(finance);
             
         }
     }
@@ -155,6 +169,20 @@ var appController = (function (uiCtrl, finCtrl) {
                 ctrlAddItem();
             }
         })
+        document.querySelector(DOM.containerDiv).addEventListener('click', function (event) {
+            var id = event.target.parentNode.parentNode.parentNode.parentNode.id;
+            if (id) {
+                var arr = id.split('-');
+                var type = arr[0];
+                var fixedId = parseInt(arr[1]);
+                // Санхүүгийн модулаас устгана
+                finCtrl.deleteItem(type, fixedId);
+                // Дэлгэц дээрээс энэ элемэнтийг устгана
+                uiCtrl.deleteListItem(id);
+                
+                // Төсвийг дахин шинэчлэнэ
+            }
+        })
     }
     return {
         init: function () {
@@ -162,11 +190,11 @@ var appController = (function (uiCtrl, finCtrl) {
                 finance: 0,
                 procent: 0,
                 totalInc: 0,
-                totalExp:0
+                totalExp: 0
             })
             setupEventListener();
         }
     }
-})(uiController, appController);
+})(uiController, financeController);
 
 appController.init();
